@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Tra cứu điểm thi - ĐHSPKT Đà Nẵng</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f9fafc;
+    }
+    header {
+      background: #005baa;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header img {
+      height: 50px;
+    }
+    nav a {
+      margin-left: 20px;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 8px 14px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+    nav a.home {
+      color: white;
+    }
+    nav a.rank {
+      background: #ffcc00;
+      color: #333;
+    }
+    nav a.rank:hover {
+      background: #ffdb4d;
+    }
+    main {
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .copyright {
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #005baa;
+      margin-bottom: 10px;
+    }
+    .search-box {
+      margin: 20px 0;
+      text-align: center;
+    }
+    .search-box input {
+      padding: 10px;
+      width: 250px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .search-box button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      margin-left: 8px;
+      font-weight: bold;
+      background: #007acc;
+      color: white;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+    .search-box button:hover {
+      background: #005fa3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #005baa;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background: #f5f5f5;
+    }
+    h2 {
+      margin-top: 20px;
+      color: #005baa;
+      text-align: center;
+    }
+    .note {
+      margin-top: 15px;
+      font-style: italic;
+      color: #444;
+      text-align: center;
+    }
+    footer {
+      margin-top: 20px;
+      text-align: center;
+      padding: 10px;
+      background: #005baa;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/4/42/Logo_Đại_h%E1%BB%8Dc_Sư_phạm_Kỹ_thuật_Đà_Nẵng.png" alt="Logo UTE">
+      <span><b>Đại học Sư phạm Kỹ thuật Đà Nẵng</b></span>
+    </div>
+    <nav>
+      <a href="https://khoihoangton.github.io/tracuu/" class="home">Trang chủ</a>
+      <a href="https://khoihoangton.github.io/rankscore/" class="rank">⚡ Tra cứu điểm</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="copyright">📌 Web tra cứu điểm thi - Tác giả: Tôn Hoàng Khôi (CNTT K25)</div>
+    <h1>Tra cứu điểm thi & Xếp hạng</h1>
+
+    <div class="search-box">
+      <input type="text" id="sbdInput" placeholder="Nhập số báo danh...">
+      <button onclick="traCuu()">Tìm kiếm</button>
+    </div>
+
+    <div id="ketqua"></div>
+
+    <div class="note">
+      🔎 Hệ thống cho phép tra cứu điểm thi và thứ hạng từng môn so với toàn trường.
+    </div>
+  </main>
+
+  
+
+  <script>
+    let data = [];
+    let header = [];
+    let monThi = [];
+
+    async function loadCSV() {
+      const response = await fetch("ketqua.csv");
+      const text = await response.text();
+      const rows = text.trim().split("\n").map(r => r.split(","));
+      header = rows[0].map(h => h.trim());
+      data = rows.slice(1).map(r => {
+        let obj = {};
+        header.forEach((h,i)=> obj[h] = (r[i]||"").trim());
+        return obj;
+      });
+      monThi = header.filter(h => !["SBD","Họ tên","STT","Mã môn ngoại ngữ"].includes(h));
+    }
+
+    function getRank(arr, score) {
+      if (!score || isNaN(parseFloat(score))) return "";
+      score = parseFloat(score);
+      let sorted = arr.filter(v => v!="" && !isNaN(v)).map(parseFloat).sort((a,b)=>b-a);
+      let rank = sorted.indexOf(score) + 1;
+      return `${rank}/${sorted.length}`;
+    }
+
+    function traCuu() {
+      const sbd = document.getElementById("sbdInput").value.trim();
+      const hs = data.find(x => x["SBD"] === sbd);
+
+      if (!hs) {
+        document.getElementById("ketqua").innerHTML = `<p style="color:red;text-align:center;">❌ Không tìm thấy SBD ${sbd}</p>`;
+        return;
+      }
+
+      let table = "<table><tr><th>Môn</th><th>Điểm</th><th>Thứ hạng</th></tr>";
+      monThi.forEach(mon => {
+        if (hs[mon] && hs[mon] !== "") {
+          let allScores = data.map(x => x[mon]);
+          let rank = getRank(allScores, hs[mon]);
+          table += `<tr><td>${mon}</td><td>${hs[mon]}</td><td>${rank}</td></tr>`;
+        }
+      });
+      table += "</table>";
+
+      document.getElementById("ketqua").innerHTML = `
+        <h2>Kết quả của ${hs["Họ tên"]} (${hs["SBD"]})</h2>
+        ${table}
+      `;
+    }
+
+    loadCSV();
+  </script>
+</body>
+</html>
